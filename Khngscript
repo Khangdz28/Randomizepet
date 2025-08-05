@@ -54,7 +54,7 @@ end)
 
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1, 0, 0, 70)
-title.Text = " Pet Randomizer \nMade by - KielCrafts"
+title.Text = " Pet Randomizer \nMade by - Khngscript"
 title.TextScaled = true
 title.TextColor3 = Color3.new(1, 1, 1)
 title.Font = Enum.Font.GothamBold
