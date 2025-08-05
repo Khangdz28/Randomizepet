@@ -1,0 +1,208 @@
+pcall(function() game.CoreGui:FindFirstChild("PetRandomizerGUI"):Destroy() end)
+
+-- Egg to pet mappings
+local eggPets = {
+    ["Bug Egg"] = {"Dragonfly", "Praying Mantis", "Giant Ant"},
+    ["Paradise Egg"] = {"Mimic Octopus", "Capybara", "Peacock"},
+    ["Dinosaur Egg"] = {"T-Rex", "Brontosaurus", "Pterodactyl"},
+    ["Zen Egg"] = {"Kitsune", "Kappa", "Tanchozuru", "Tanuki", "Nihonzaru"},
+    ["Primal Egg"] = {"Spinosaurus", "Ankylosaurus", "Dilophosaurus", "Pachycephalosaurus", "Iguanodon", "Parasaurolophus"},
+}
+
+local ESP_ENABLED = true
+local AUTO_RANDOM = false
+
+-- UI Setup
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "PetRandomizerGUI"
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 370, 0, 270)
+frame.Position = UDim2.new(0.05, 0, 0.25, 0)
+frame.BackgroundColor3 = Color3.fromRGB(93, 64, 44)
+frame.Active = true
+frame.Draggable = false
+
+local dragToggle = false
+local dragInput, dragStart, startPos
+
+frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragToggle = true
+        dragStart = input.Position
+        startPos = frame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragToggle = false
+            end
+        end)
+    end
+end)
+
+frame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if input == dragInput and dragToggle then
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0, 70)
+title.Text = " Pet Randomizer \nMade by - KielCrafts"
+title.TextScaled = true
+title.TextColor3 = Color3.new(1, 1, 1)
+title.Font = Enum.Font.GothamBold
+title.TextWrapped = true
+title.BackgroundTransparency = 1
+
+local randomBtn = Instance.new("TextButton", frame)
+randomBtn.Size = UDim2.new(1, -30, 0, 60)
+randomBtn.Position = UDim2.new(0, 15, 0, 80)
+randomBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 26)
+randomBtn.Text = " Randomize Pets"
+randomBtn.Font = Enum.Font.GothamBold
+randomBtn.TextColor3 = Color3.new(1, 1, 1)
+randomBtn.TextScaled = true
+randomBtn.BorderSizePixel = 0
+
+local espBtn = Instance.new("TextButton", frame)
+espBtn.Size = UDim2.new(1, -30, 0, 50)
+espBtn.Position = UDim2.new(0, 15, 0, 150)
+espBtn.BackgroundColor3 = Color3.fromRGB(51, 51, 51)
+espBtn.Text = " ESP: ON"
+espBtn.Font = Enum.Font.GothamBold
+espBtn.TextColor3 = Color3.new(1, 1, 1)
+espBtn.TextScaled = true
+espBtn.BorderSizePixel = 0
+
+local autoBtn = Instance.new("TextButton", frame)
+autoBtn.Size = UDim2.new(1, -30, 0, 50)
+autoBtn.Position = UDim2.new(0, 15, 0, 210)
+autoBtn.BackgroundColor3 = Color3.fromRGB(86, 201, 75)
+autoBtn.Text = " Auto Randomize: OFF"
+autoBtn.Font = Enum.Font.GothamBold
+autoBtn.TextColor3 = Color3.new(1, 1, 1)
+autoBtn.TextScaled = true
+autoBtn.BorderSizePixel = 0
+
+-- Rainbow effect
+local function rainbowEffect(label)
+    coroutine.wrap(function()
+        local t = 0
+        while label and label.Parent do
+            t = t + 0.05
+            local r = math.sin(t) * 0.5 + 0.5
+            local g = math.sin(t + 2) * 0.5 + 0.5
+            local b = math.sin(t + 4) * 0.5 + 0.5
+            label.TextColor3 = Color3.new(r, g, b)
+            wait(0.1)
+        end
+    end)()
+end
+
+-- ESP Logic
+local function addESP(egg)
+    local eggType = egg.Name
+    local petList = eggPets[eggType]
+    if not petList then return end
+
+    -- Clean up existing ESP if present
+    if egg:FindFirstChild("PetNameBillboard") then
+        egg:FindFirstChild("PetNameBillboard"):Destroy()
+    end
+
+    local name = Instance.new("BillboardGui", egg)
+    name.Name = "PetNameBillboard"
+    name.Size = UDim2.new(0, 200, 0, 50)
+    name.StudsOffset = Vector3.new(0, 3, 0)
+    name.AlwaysOnTop = true
+
+    local label = Instance.new("TextLabel", name)
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.TextStrokeTransparency = 0
+    label.TextScaled = true
+    label.Font = Enum.Font.GothamBold
+    label.Text = petList[math.random(1, #petList)]
+    label.TextColor3 = Color3.fromRGB(255, 255, 0)
+
+    rainbowEffect(label)
+end
+
+local function removeESP()
+    for _, egg in pairs(workspace:GetDescendants()) do
+        if egg:FindFirstChild("PetNameBillboard") then
+            egg.PetNameBillboard:Destroy()
+        end
+    end
+end
+
+local function refreshESP()
+    if not ESP_ENABLED then
+        removeESP()
+        return
+    end
+    for _, egg in pairs(workspace:GetDescendants()) do
+        if egg:IsA("Model") and eggPets[egg.Name] then
+            addESP(egg)
+        end
+    end
+end
+
+-- Fancy Randomizer Effect
+local function animatePetName(label, petList)
+    local loops = 10
+    for i = 1, loops do
+        label.Text = petList[math.random(1, #petList)]
+        task.wait(0.05)
+    end
+    label.Text = petList[math.random(1, #petList)]
+end
+
+local function randomizePet()
+    for _, egg in pairs(workspace:GetDescendants()) do
+        if egg:IsA("Model") and eggPets[egg.Name] then
+            if egg:FindFirstChild("PetNameBillboard") then
+                local label = egg.PetNameBillboard:FindFirstChildOfClass("TextLabel")
+                if label then
+                    animatePetName(label, eggPets[egg.Name])
+                end
+            end
+        end
+    end
+end
+
+-- Auto loop
+task.spawn(function()
+    while true do
+        if AUTO_RANDOM then
+            randomizePet()
+        end
+        task.wait(3)
+    end
+end)
+
+-- Button Logic
+espBtn.MouseButton1Click:Connect(function()
+    ESP_ENABLED = not ESP_ENABLED
+    espBtn.Text = " ESP: " .. (ESP_ENABLED and "ON" or "OFF")
+    refreshESP()
+end)
+
+autoBtn.MouseButton1Click:Connect(function()
+    AUTO_RANDOM = not AUTO_RANDOM
+    autoBtn.Text = " Auto Randomize: " .. (AUTO_RANDOM and "ON" or "OFF")
+end)
+
+randomBtn.MouseButton1Click:Connect(function()
+    randomizePet()
+end)
+
+-- Initial ESP
+refreshESP()
